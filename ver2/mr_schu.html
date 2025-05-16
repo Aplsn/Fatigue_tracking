@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблица Шульте</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+        .grid-container { 
+            display: grid;
+            gap: 10px; 
+            grid-template-columns: repeat(5, 80px);
+            grid-template-rows: repeat(5, 80px);
+            /* grid-gap: 10px; */
+        }
+        .grid-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #000;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            text-align: center;
+            word-wrap: break-word;
+            padding: 5px;
+        }
+        .grid-item:hover {
+            background-color: #ddd;
+        }
+        #question, .test-question { 
+            font-size: 32px;
+            margin-top: 20px; 
+        }
+        #question {
+            font-weight: bold;
+        }
+        #downloadButton, #downloadTestButton { 
+            display: none;
+            margin-top: 20px;
+            padding: 10px; 
+            background-color: red; 
+            color: white; 
+            border: none; 
+            cursor: pointer; }
+            #fatigueTest {
+                display: flex;
+                flex-direction: column;
+                align-items: justify;
+                margin: 20px ; /* отступ сверху и автоматические отступы слева/справа для центрирования */
+                padding: 0 20px;   /* отступы по бокам */
+                max-width: 800px;  /* ограничение максимальной ширины */
+            }
+        .test-question { margin-top: 10px; font-size: 18px; }
+        .test-option { display: block; margin: 5px; cursor: pointer; }
+        .hidden { display: none;}
+
+        #instructions {
+            
+                flex-direction: column;
+                align-items: justify;
+                margin: 20px ; /* отступ сверху и автоматические отступы слева/справа для центрирования */
+                padding: 0 20px;   /* отступы по бокам */
+                max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Блок с инструкцией -->
+    <div id="instructions">
+        <h1>Инструкция</h1>
+        <p>
+            Добро пожаловать в тест! Вам предстоит решить серию математических задач.
+            Для каждой задачи выберите правильный ответ(любой) из представленных вариантов как можно быстрее.
+            После выполнения заданий вы пройдете опросник острого умственного утомления А.Б. Леоновой и Н.Н. Савичевой, чтобы оценить ваше состояние.
+            Пожалуйста, внимательно прочитайте данную инструкцию и нажмите «Начать тест», чтобы приступить.
+        </p>
+        <button id="startTestButton">Начать тест</button>
+    </div>
+
+    <!-- Основная область теста (скрыта до старта) -->
+    <div id="testArea" class="hidden">
+        <div id="question"></div>
+        <div class="grid-container" id="grid"></div>
+    </div>
+
+    <div id="fatigueTest" class="hidden"></div>
+    <button id="downloadButton" class="hidden" onclick="downloadJSON()">Скачать результаты</button>
+
+
+    <script>
+        const TOTAL_QUESTIONS = 50;
+        const TOTAL_TEST_QUESTIONS = 20;
+        const GRID_SIZE_X = 5;  
+        const GRID_SIZE_Y = 5;  
+        const TILE_WIDTH = 80;  
+        const TILE_HEIGHT = 80;  
+
+        const WORD_NUMBER_RATIO = 0.3;  
+        const LEVELS_RATIO = [0.5, 0.75, 1.0]; 
+        const START_DATE = new Date()
+        const FATIGUE_SURVEY_INTRO = `
+Прочтите внимательно каждое из представленных ниже утверждений и соотнесите их с тем, как вы чувствуете себя в данный момент времени.
+Выберите ответ «Да», если оно соответствует вашим текущим ощущениям, или «Нет», если оно отсутствует.
+В случае, если вы затрудняетесь с выбором ответа, выберите «Затрудняюсь ответить».
+Последовательно отвечайте на все пункты опросника и не задумывайтесь долго над выбором ответа, — как правило, первое ощущение оказывается наиболее точным!` 
+        const words = ["ноль", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять"];
+        //  "десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать", "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать", 
+        //  "двадцать", "двадцать один", "двадцать два", "двадцать три", "двадцать четыре", "двадцать пять", "двадцать шесть", "двадцать семь", "двадцать восемь", "двадцать девять", 
+        //  "тридцать", "тридцать один", "тридцать два", "тридцать три", "тридцать четыре", "тридцать пять", "тридцать шесть", "тридцать семь", "тридцать восемь", "тридцать девять", 
+        //  "сорок", "сорок один", "сорок два", "сорок три", "сорок четыре", "сорок пять", "сорок шесть", "сорок семь", "сорок восемь", "сорок девять", 
+        //  "пятьдесят", "пятьдесят один", "пятьдесят два", "пятьдесят три", "пятьдесят четыре", "пятьдесят пять", "пятьдесят шесть", "пятьдесят семь", "пятьдесят восемь", "пятьдесят девять", 
+        //  "шестьдесят", "шестьдесят один", "шестьдесят два", "шестьдесят три", "шестьдесят четыре", "шестьдесят пять", "шестьдесят шесть", "шестьдесят семь", "шестьдесят восемь", "шестьдесят девять", 
+        //  "семьдесят", "семьдесят один", "семьдесят два", "семьдесят три", "семьдесят четыре", "семьдесят пять", "семьдесят шесть", "семьдесят семь", "семьдесят восемь", "семьдесят девять", 
+        //  "восемьдесят", "восемьдесят один", "восемьдесят два", "восемьдесят три", "восемьдесят четыре", "восемьдесят пять", "восемьдесят шесть", "восемьдесят семь", "восемьдесят восемь", "восемьдесят девять", 
+        //  "девяносто", "девяносто один", "девяносто два", "девяносто три", "девяносто четыре", "девяносто пять", "девяносто шесть", "девяносто семь", "девяносто восемь", "девяносто девять"];
+
+        let questionsAnswered = 0;
+        let results = {};
+        results.answersLog = [];
+        results.testAnswersLog = new Array(TOTAL_TEST_QUESTIONS).fill(null).map((_, index) => ({ num: index+1, question: null, answer: null}));
+        let mathQuestions = [];
+        const fatigueSurvey = [
+                                "Чувствую общую слабость",
+                                "Мне приходится заставлять себя как можно быстрее реагировать на поступающую информацию",
+                                "Я спокоен и собран",
+                                "Мне душно",
+                                "Хочется хоть немного отвлечься от работы",
+                                "У меня тяжелая голова",
+                                "Мне стало трудно думать",
+                                "Я чувствую себя раздражённым",
+                                "Мне не хочется разговаривать",
+                                "Я не обращаю внимания на то, как идет работа у моих коллег",
+                                "У меня стали появляться паузы во время работы",
+                                "Время течет медленно",
+                                "Мне хочется встать и размяться",
+                                "У меня усталые глаза",
+                                "Мне приходится напрягать слух",
+                                "У меня постоянно возникают сомнения в правильности исполнения работы",
+                                "Мне весело",
+                                "Мне хочется работать"
+                                ];
+
+        
+        function numberToWords(num) {
+            return words[num];
+        }
+
+        function getRandomNumber() {
+            return Math.floor(Math.random() * 9) + 1;
+        }
+
+        function getRandomNumberAns() {
+            return Math.floor(Math.random() * 10);
+        }
+
+        function shuffleArray(arr) {
+            let newArr = [...arr]; // Avoid modifying original
+            for (let i = newArr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+
+        function generateQuestion(n) {
+            let isAddition = n % 2 === 0;
+
+
+            let num1 = getRandomNumber();
+            let num2 = getRandomNumber();
+            if (num2 > num1) {
+                [num1, num2] = [num2, num1];
+            }
+
+            let correctAnswer = isAddition ? (num1 + num2) % 10 : Math.abs(num1 - num2);
+            
+            let formatType = LEVELS_RATIO.findIndex((num) => num * TOTAL_QUESTIONS > n) ;
+            
+            let formattedNum1 = (formatType >= 1) ? numberToWords(num1) : num1;
+            let formattedNum2 = (formatType === 2) ? numberToWords(num2) : num2;
+            
+            let questionText = isAddition ? `(${formattedNum1} ${ "+" } ${formattedNum2}) % 10 = ?`: `|${formattedNum1} ${ "-" } ${formattedNum2}| = ?`;
+
+            let answerSet = [correctAnswer];
+            while (answerSet.length < GRID_SIZE_X * GRID_SIZE_Y) {
+                answerSet.push(getRandomNumberAns());
+            }
+            
+            let answers = Array.from(answerSet).map((n, ind) => ind < WORD_NUMBER_RATIO * GRID_SIZE_X * GRID_SIZE_Y ? [n, numberToWords(n)] : [n, n]);
+            answers = shuffleArray(answers);
+            let operation = isAddition ? "+" : "-";
+
+            let ans = {
+                questionText: questionText,
+                num1: num1,
+                num2: num2,
+                formattedNum1: formattedNum1,
+                formattedNum2: formattedNum2,
+                formatType: formatType,
+                operation: operation ,
+                correctAnswer: correctAnswer,
+                answers: answers
+            };
+            
+            return ans;
+        }
+
+
+
+        function generateQuestionList() {
+            console.log("questions");
+
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                console.log(i);
+                mathQuestions.push(generateQuestion(i));
+            }
+            mathQuestions = shuffleArray(mathQuestions);
+        }
+
+        function renderQuestion() {
+            let startTime = Date.now();
+            if (questionsAnswered >= TOTAL_QUESTIONS) {
+                document.getElementById("testArea").classList.add("hidden");
+                // document.getElementById("grid").classList.add("hidden");
+                document.getElementById("fatigueTest").classList.remove("hidden");
+                // document.getElementById("downloadButton").classList.remove("hidden");
+                document.getElementById("downloadButton").style.display = "block";
+
+                renderTest();
+                return;
+            }
+            
+
+            let {
+                questionText: questionText,
+                num1: num1,
+                num2: num2,
+                formattedNum1: formattedNum1,
+                formattedNum2: formattedNum2,
+                formatType: formatType,
+                operation: operation ,
+                correctAnswer: correctAnswer,
+                answers: answers
+            } = mathQuestions[questionsAnswered];
+            document.getElementById("question").innerText = questionText;
+            console.log(questionText);
+            let grid = document.getElementById("grid");
+            grid.innerHTML = "";
+            grid.style.gridTemplateColumns = `repeat(${GRID_SIZE_X}, ${TILE_WIDTH}px)`;
+            grid.style.gridTemplateRows = `repeat(${GRID_SIZE_Y}, ${TILE_HEIGHT}px)`;
+
+            answers.forEach(answer => {
+                let tile = document.createElement("div");
+                tile.className = "grid-item";
+                tile.innerText = answer[1];
+                tile.onclick = () => {
+                    results.answersLog.push({ 
+                            q_num: questionsAnswered, 
+                            startTime:startTime, 
+                            endTime: Date.now(), 
+                            num1: num1, 
+                            num2: num2, 
+                            formattedNum1: formattedNum1,
+                            formattedNum2: formattedNum2,
+                            formatType: formatType,
+                            operation: operation, 
+                            question: questionText, 
+                            answer: answer[0], 
+                            correct: correctAnswer, 
+                            correctFlg: answer[0] == correctAnswer ? 1: 0});
+                    questionsAnswered++;
+                    renderQuestion();
+                };
+                grid.appendChild(tile);
+            });
+        }
+
+        function renderTest() {
+            let testContainer = document.getElementById("fatigueTest");
+            testContainer.innerHTML = `
+                <h2>Опросник острого умственного утомления</h2>
+                <h3>Инструкция</h3>
+                <p>${FATIGUE_SURVEY_INTRO}</p>
+                `;
+
+            for (let i = 1; i <= TOTAL_TEST_QUESTIONS; i++) {
+                let options = [];
+                let questionText = "";
+                // Первые 18 вопросов – базовый опрос усталости
+                if (i <= fatigueSurvey.length) {
+                    questionText = fatigueSurvey[i - 1];
+                    options = ['Да', 'Нет', 'Затрудняюсь'];
+                } else if (i === fatigueSurvey.length + 1) {
+                    // 19-й вопрос: чем вы занимались последние 8 часов
+                    questionText = "Чем вы занимались последние 8 часов";
+                    options = [
+                        "умственная работа(включая комп игры)/работа с людьми",
+                        "другая работа",
+                        "отдых (не у экрана, сон)",
+                        "другое"
+                    ];
+                } else if (i === fatigueSurvey.length + 2) {
+                    // 20-й вопрос: оценка работоспособности по 10-бальной шкале
+                    questionText = "Оцените вашу работоспособность по 10-бальной шкале (где 1 - не могу сделать ничего полезного, и 10 - максимум работоспособности)";
+                    options = ["1","2","3","4","5","6","7","8","9","10"];
+                }
+                // let shuffledOptions = Array.from(options).sort(() => Math.random() - 0.5);
+
+                let questionDiv = document.createElement("div");
+                questionDiv.className = "test-question";
+                let question = questionText
+                questionDiv.innerText = `${i}. ${question}`;
+
+                let form = document.createElement("form");
+                form.dataset.questionNum = i;
+                form.dataset.question = question;
+
+                options.forEach(option => {
+                    let label = document.createElement("label");
+                    label.style.display = "block";
+
+                    let radio = document.createElement("input");
+                    radio.type = "radio";
+                    radio.name = `test_q${i}`;
+                    radio.value = option;
+                    
+                    radio.onclick = () => {
+                        results.testAnswersLog[i-1] = { num: i, question: form.dataset.question, answer: option}
+                        // results.testAnswersLog = testAnswersLog.filter(q => q.num !== form.dataset.questionNum);
+                        // results.testAnswersLog.push({ num: i, question: form.dataset.question, answer: option});
+                    };
+
+                    label.appendChild(radio);
+                    label.appendChild(document.createTextNode(` ${option}`));
+                    form.appendChild(label);
+                });
+
+                questionDiv.appendChild(form);
+                testContainer.appendChild(questionDiv);
+            }
+            // document.getElementById("fatigueTest").classList.remove("hidden");
+
+            // document.getElementById("downloadButton").classList.remove("hidden");
+        }
+
+        // function downloadCSV(data, filename) {
+        //     let csv = "q_num,startTime,endTime,num1,num2,operation,question,answer,correct,correctFlg\n" + data.map(row => Object.values(row).join(",")).join("\n");
+        //     let blob = new Blob([csv], { type: "text/csv" });
+        //     let link = document.createElement("a");
+        //     link.href = URL.createObjectURL(blob);
+        //     link.download = filename;
+        //     link.click();
+        // }
+        // function downloadTestCSV(data, filename) {
+        //     let csv = "q_num,question,answer\n" + data.map(row => Object.values(row).join(",")).join("\n");
+        //     let blob = new Blob([csv], { type: "text/csv" });
+        //     let link = document.createElement("a");
+        //     link.href = URL.createObjectURL(blob);
+        //     link.download = filename;
+        //     link.click();
+        // }
+        function getFormattedDateTime(date) {
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0'); // Ensure 2-digit format
+            let day = String(date.getDate()).padStart(2, '0');
+            let hours = String(date.getHours()).padStart(2, '0');
+            let minutes = String(date.getMinutes()).padStart(2, '0');
+            let seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${year}_${month}_${day}_${hours}:${minutes}:${seconds}`;
+}
+        // function downloadJSON() {
+        //     let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(results, null, 4));
+        //     let link = document.createElement("a");
+        //     link.setAttribute("href", dataStr);
+        //     link.setAttribute("download", `results_${getFormattedDateTime(START_DATE)}.json`);
+        //     link.click();
+        // }
+        function downloadJSON() {
+            const unanswered = results.testAnswersLog.filter(item => item.answer === null);
+            console.log(unanswered)
+            if (unanswered.length > 0) {
+                alert("Пожалуйста, ответьте на все вопросы опроса перед выгрузкой результатов.");
+                return;
+            }
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(results, null, 4));
+            let link = document.createElement("a");
+            link.setAttribute("href", dataStr);
+            link.setAttribute("download", `results_${getFormattedDateTime(START_DATE)}.json`);
+            link.click();
+        }
+
+        // Функция для старта теста: скрывает инструкцию и показывает тестовую область
+        function startTest() {
+            document.getElementById("instructions").classList.add("hidden");
+            document.getElementById("testArea").classList.remove("hidden");
+            generateQuestionList();
+            renderQuestion();
+        }
+
+        document.getElementById("startTestButton").addEventListener("click", startTest);
+    </script>
+
+</body>
+</html>
