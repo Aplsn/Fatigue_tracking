@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Математический Тест</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #math-question {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        #math-inputBox {
+            font-size: 24px;
+            padding: 10px;
+            margin: 0 auto 20px auto;
+            border: 2px solid #333;
+            width: 200px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            line-height: 40px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-auto-rows: 80px;
+            gap: 10px;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .grid-item {
+            font-size: 18px;
+            background: #f0f0f0;
+            border: 2px solid #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            width: 80px;
+            box-sizing: border-box;
+            transition: background 0.2s ease;
+        }
+        .button { 
+            margin-top: 20px; 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+        }
+
+        .grid-item:hover {
+            background: #ddd;
+        }
+        #downloadBtn, #startTestButton, #nextButton1 {
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .hidden { display: none; }
+        .instruction {
+            position: absolute;
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            max-width: 600px; 
+            width: 90%; 
+            text-align: center; 
+            background-color: #fff; 
+            padding: 30px; 
+            border: 2px solid #ccc; 
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); 
+            border-radius: 10px;
+        }
+        .page { 
+            display: none; 
+            padding: 20px; 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        .active { display: block; }
+
+        #fatigue-test {
+            /* display: flex; */
+            flex-direction: column;
+            align-items: flex-start;
+            margin: 20px auto;
+            max-width: 800px;
+            text-align: left;
+        }
+        #fatigue-test div {
+            margin-bottom: 15px;
+        }
+        #fatigue-test label {
+            display: block;
+            text-align: left;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <button id="reload" onclick="location.reload(); return false;" class="button hidden" style="background-color: peachpuff;">
+        Начать измерение заново
+    </button> -->
+    
+<div id="base-instruction" class="instruction page active" >
+    <h1>Инструкция</h1>
+    <p><strong>Добро пожаловать в тест!</strong></p>
+    <p>
+        В тесте 4 секции: арифметические задачи, задачи на перепечатку, опросник острого умственного утомления и шкала психологического стресса. 
+    </p>
+    
+    <p>Сейчас вам предстоит решить серию арифметических задач. </p>
+    <ul style="text-align: justify;">
+
+        <li>Для каждой задачи введите ответ с помощью панели.</li>
+        <li> С помощью Enter вы сдаете ответ на текущий вопрос и переходите к следующему.</li>
+        <li>"←" - удаляет последний символ.</li>
+        <li>Не отвлекайтесь, если вы сами поняли что отвлеклись, то начните измерение заново.</li>
+
+          
+    </ul>
+    <p>
+         Пожалуйста, внимательно прочитайте данную инструкцию и нажимите «Начать тест» чтобы приступить
+    </p>
+    <button class="button" onclick="startMathTest()">Начать тест</button>
+</div>
+<div id="math-test" class="page">
+    <div id="math-question">Загрузка...</div>
+    <div id="math-inputBox"></div>
+    <div class="grid-container" id="math-keyboard"></div>
+</div>
+
+<div id="typing-instruction" class="instruction hidden page">
+    <h2>Инструкция к задаче перепечатки</h2>
+    <p>Сейчас вы увидите строки, которые нужно будет перепечатать как можно быстрее и точнее. </p>
+    <ul style="text-align: justify;">
+        <li><strong>Заранее поменяйте расскладку клавиатуры на русскую!</strong></li>
+        <li>Разница между строчными и заглавными буквами важна: а и А - это два разных символа</li>
+        <li>Каждая строка завершается точкой </li>
+        <li>Количество пробелов между словами не имеет значения. </li>
+        <li>В тексте гарантированно отсутствуют цифры 0,3 и 6, так как они неотличимы от заглавных букв «О», «З» и строчной «б».</li>
+        <li>После завершения перепечатки строки нажмите на «Enter» на клавиатуре</li>
+        <li>Не отвлекайтесь, если вы сами поняли что отвлеклись, то начните измерение заново.</li>
+    </ul>
+
+    <p>Пожалуйста, внимательно прочитайте данную инструкцию и нажимите «Начать тест» чтобы приступить</p>
+    <button class="button" onclick="showTypingTest()">Приступить</button>
+</div>
+<div id="typing-test" class="page">
+    <h2>Перепечатка</h2>
+        <ul style="text-align: justify;">
+            <li>Разница между строчными и заглавными буквами важна: а и А - это два разных символа</li>
+            <li>Каждая строка завершается точкой </li>
+            <li>Количество пробелов между словами не имеет значения.</li>
+            <li>После завершения перепечатки строки нажмите на «Enter» на клавиатуре или нажмите на кнопку «Продолжить» на экране</li>
+        </ul>   
+    
+    <!-- <p>Пожалуйста, внимательно прочитайте данную инструкцию и нажимите «Продолжить» чтобы приступить</p> -->
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        
+        <div id="typing-box" style="border: 2px solid #000; display: inline-block; white-space: nowrap; padding: 2px; font-size: 18px; vertical-align: middle;">
+            
+        <!-- <div id="typing-box" style="width: 400px; height: 80px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-size: 20px;"> -->
+          <!-- сюда вставляется строка -->
+        </div>
+        <textarea id="typing-field" style="width: 400px; height: 80px; font-size: 18px; text-align: center;"></textarea>
+        <!-- <button class="button" id="newline">Продолжить</button> -->
+      </div>
+</div>
+<div id="fatigue-instruction" class="instruction hidden page">
+    <h2>Опросник острого умственного утомления</h2>
+
+    <p>
+        Отлично! Теперь перейдём к короткому <strong>опроснику острого умственного утомления А.Б. Леоновой</strong>, который поможет оценить ваше текущее состояние. 
+    </p>
+    <p>
+        Прочтите внимательно каждое из представленных утверждений и соотнесите их с тем, как вы чувствуете себя в данный момент времени.
+        Выберите ответ «Да», если оно соответствует вашим текущим ощущениям, или «Нет», если оно отсутствует.
+        В случае, если вы затрудняетесь с выбором ответа, выберите «Затрудняюсь ответить».
+        Последовательно отвечайте на все пункты опросника и не задумывайтесь долго над выбором ответа, — как правило, первое ощущение оказывается наиболее точным!
+    </p>
+    <p>Пожалуйста, внимательно прочитайте данную инструкцию и нажимите «Приступить</p>
+
+    <button class="button" onclick="showFatigueTest()">Приступить</button>
+</div>
+<div id="fatigue-test" class="hidden"></div>
+<div id="stress-instruction" class="instruction hidden page">
+    <h2>Инструкция к шкале психологического стресса (PSM-25)</h2>
+    <p>Оцените, пожалуйста, ваше состояние за последнюю неделю с помощью 8-балльной шкалы.     </p>
+        Цифры от 1 до 8 означают частоту переживаний:
+
+        <div style="display: flex; justify-content: center;">
+            <ol style="list-style: none; padding: 0; text-align: left;">
+
+                <li>1 -- «никогда»;</li>
+                <li>2 -- «крайне редко»;</li>
+                <li>3 -- «очень редко»;</li>
+                <li>4 -- «редко»;</li>
+                <li>5 -- «иногда»;</li>
+                <li>6 -- «часто»;</li>
+                <li>7 -- «очень часто»;</li>
+                <li>8 -- «постоянно (ежедневно)».</li>
+            </ol>
+        </div>
+    
+        <p>Здесь нет неправильных или ошибочных ответов. 
+        Отвечайте как можно искренне. 
+        Для выполнения теста потребуется приблизительно пять минут.</p>  
+
+    <p>Пожалуйста, внимательно прочитайте данную инструкцию и нажимите «Приступить</p>
+
+    <button class="button" onclick="showStressTest()">Приступить</button>
+</div>
+<div id="stress-test" class="hidden page"></div>
+<div id="download" class="instruction hidden page">
+    <h2>Поздравляю, вы прошли тест!</h2>
+    <button class="button" onclick="downloadJSON()">Скачать JSON</button>
+</div>
+<script>
+let results = { answers: [], typingAnswersLog: [], testAnswersLog: [], stressTestLog: [], pageMetaData: [], mouseTrack: [] };
+let page_num = 0
+let start;
+const INSTRUCTION = 'base-instruction'
+const MATH_TEST = 'math-test'
+const TYPING_INSTRUCTION = 'typing-instruction'
+const TYPING_TEST = 'typing-test'
+const FATIGUE_INSTRUCTION = 'fatigue-instruction'
+const FATIGUE_TEST = 'fatigue-test'
+const STRESS_INSTRUCTION = 'stress-instruction'
+const STRESS_TEST = 'stress-test'
+const DOWNLOAD = 'download'
+// const pages = document.querySelectorAll('.page');
+const pages = [
+            INSTRUCTION
+            ,MATH_TEST
+            ,TYPING_INSTRUCTION
+            ,TYPING_TEST
+            ,FATIGUE_INSTRUCTION
+            ,FATIGUE_TEST
+            ,STRESS_INSTRUCTION
+            ,STRESS_TEST
+            ,DOWNLOAD
+
+        ]
+const pages_reload = new Set([
+    MATH_TEST
+    ,TYPING_TEST
+
+])
+console.log(pages)
+
+
+function showPage(current) {
+    const startTime = Date.now()
+    // const 
+    console.log( current)
+    
+    pages.forEach((page, i) => {
+    document.getElementById(page).classList.remove('active');
+
+    if (page === current) {
+        document.getElementById(page).classList.add('active');
+        results.pageMetaData.push(
+        {
+            order: page_num,
+            page: page,
+            startTime: startTime
+        }
+        )
+    }
+    });
+    // if (pages_reload.has(current)) {
+    //     document.getElementById("reload").classList.remove('hidden');
+    // } else {
+    //     document.getElementById("reload").classList.add('hidden');
+
+    // }
+    page_num++
+
+    }
+    function onMouseMove(e) {
+        results.mouseTrack.push({ x: e.clientX, y: e.clientY, time: Date.now() });
+    }
+function startMathTest() {
+    start = Date.now()
+    showPage(MATH_TEST); // предполагаем, что следующая страница будет с тестом
+    // document.getElementById(page).classList.remove('active');
+    
+    document.addEventListener("mousemove", (e) => onMouseMove(e));
+    const TOTAL_MATH = 10;
+    let mathIndex = 0;
+    let correctAnswer;
+    let startTime;
+    let input = "";
+    let currentBackspaceCount = 0;
+    console.log(`Открыли окно арифм задач`);
+    function generateQuestion() {
+        console.log(`Генерируем ${mathIndex} пример`);
+
+        let a = Math.floor(Math.random() * 90) + 10;
+        let b = Math.floor(Math.random() * 90) + 10;
+        correctAnswer = a + b;
+        document.getElementById("math-question").innerText = `${a} + ${b} = ?`;
+        input = "";
+        const inputBox = document.getElementById("math-inputBox");
+        inputBox.innerText = input;
+        renderKeyboard();
+    }
+    
+    function renderKeyboard() {
+        startTime = Date.now();
+        console.log(`Выдаем панель ответов ${mathIndex}`);
+
+        const keys = ["0","1","2","3","4","5","6","7","8","9","←","Enter"];
+        const shuffled = keys.sort(() => Math.random() - 0.5);
+        const container = document.getElementById("math-keyboard");
+        container.innerHTML = "";
+        shuffled.forEach(key => {
+            let btn = document.createElement("div");
+            btn.className = "grid-item";
+            btn.innerText = key;
+            btn.onclick = () => handleKey(key, startTime);
+            container.appendChild(btn);
+        });
+    }
+
+    function handleKey(key) {
+        console.log(`Нажали на кнопку ${key}`);
+
+        if (key === "←") {
+            const pos = input.selectionStart;
+            const prevChar = input.charAt(pos - 1);
+            input = input.slice(0, -1);
+            if (!isNaN(prevChar.charCodeAt(0))) {
+                currentBackspaceCount++
+            }
+        } else if (key === "Enter") {
+            if (input.length === 0) {
+                alert("Пожалуйста, введите ответ перед нажатием Enter.");
+                return;
+            }
+            console.log(`currentBackspaceCount ${currentBackspaceCount}`)
+            results.answers.push({
+                q_num: mathIndex,
+                startTime: startTime,
+                endTime: Date.now(),
+                num1: parseInt(document.getElementById("math-question").innerText.split(" + ")[0]),
+                num2: parseInt(document.getElementById("math-question").innerText.split(" + ")[1]),
+                question: document.getElementById("math-question").innerText,
+                answer: parseInt(input),
+                correct: correctAnswer,
+                correctFlg: parseInt(input) === correctAnswer ? 1 : 0,
+                backspaceCount: currentBackspaceCount
+            });
+            mathIndex++;
+            currentTypingIndex = 0;
+            if (mathIndex >= TOTAL_MATH  ) {
+                // showTypingTest();
+                showPage(TYPING_INSTRUCTION)
+                return;
+            }
+            generateQuestion();
+        } else {
+            // if (input.length < 3) {
+                console.log(`Добавили символ ${key}`);
+
+                input += key;
+            // }
+        }
+        console.log(`Должны вывести ${input}`);
+
+        document.getElementById("math-inputBox").innerText = input;
+        renderKeyboard();
+    }
+
+    generateQuestion();
+}
+
+
+
+
+function showTypingTest() {
+    showPage(TYPING_TEST)
+    console.log(`typing typing`)
+    const STRINGS_COUNT = 10;
+    let charPool;
+    results.typingAnswersLog = new Array(STRINGS_COUNT).fill({ q_num: null, reference: null, answer: null, startTime: null, endTime: null}).map((_, index) => ({ num: index+1, question: null, answer: null}));
+
+
+    function normSpaces(str) {
+        return str
+            .split(' ')
+            .filter(Boolean)
+            .join(' ');
+        }
+
+    function baseStringsSquare() {
+        const alphabetUpper = 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ 12 45 789       ';
+        const alphabetLower = 'абвгдежзийклмнопрстуфхцчшщъыьэюя 12 45 789       ';
+
+        const upsymbolmul = 1;
+        const lowsymbolmul = 5;
+
+        // Повторяем символы
+        const text0 = alphabetUpper.repeat(upsymbolmul) + alphabetLower.repeat(lowsymbolmul);
+        charPool = text0.length;
+        // Перемешиваем
+        const chars = text0.split('');
+        for (let i = chars.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [chars[i], chars[j]] = [chars[j], chars[i]];
+        }
+
+        // Формируем строку
+        const shuffled = chars.join('');
+        // const stringlen = Math.floor(shuffled.length / STRINS_COUNT);
+        const stringlen = 25;
+        const strings = [];
+
+        for (let i = 0; i < STRINGS_COUNT; i++) {
+            const chunk = shuffled.slice(i * stringlen, (i + 1) * stringlen);
+            const cleaned = normSpaces(chunk);
+            strings.push(cleaned + '.');
+        }
+
+        return strings;
+        }
+
+    const typingStrings = baseStringsSquare();
+    const referenceText = typingStrings.join("\n");
+    let currentTypingIndex = 0;
+    let currentBackspaceCount = 0;
+    let startingPoint;
+
+    function renderTyping() {
+        console.log(`${currentTypingIndex}`)
+        startingPoint = Date.now()
+        const box = document.getElementById('typing-box');
+        box.innerText = referenceText;   
+        box.style.width  = box.scrollWidth  + 'px';
+        box.style.height = box.scrollHeight + 'px';
+        const inputBox = document.getElementById('typing-field');
+        inputBox.style.height = (parseInt(box.scrollHeight) + 10) + 'px';
+    }
+
+  
+    function nextTypingLine() {
+        const arr = document.getElementById("typing-field").value.split("\n");
+        const typed = arr[arr.length - 1];
+        const reference = typingStrings[currentTypingIndex];
+
+        console.log("REFERENCE:", reference);
+        console.log("USER INPUT:", typed);
+        console.log(`typing nn `)
+        console.log(results.typingAnswersLog)
+        results.typingAnswersLog[currentTypingIndex] = { 
+            q_num: currentTypingIndex, 
+            reference: reference, 
+            answer: typed, 
+            backspaceCount: currentBackspaceCount, 
+            startTime: startingPoint, 
+            endTime: Date.now(),
+            charPool: charPool,
+            textLength: reference.length
+        };
+  
+        currentTypingIndex++;
+        currentBackspaceCount = 0;
+        if (currentTypingIndex < STRINGS_COUNT) {
+            // renderTyping();
+            console.log('next')
+            startingPoint = Date.now()
+
+        } else {
+            showPage(FATIGUE_INSTRUCTION);
+        }
+
+    }
+    renderTyping()
+    // Обработка клавиши Enter
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && document.activeElement.id === "typing-field") {
+        // e.preventDefault();
+        nextTypingLine();
+      }
+    });
+    
+    
+    const inputArea = document.getElementById("typing-field");
+    inputArea.addEventListener("keydown", (e) => {
+        console.log(`sides ${e.key}`)
+        if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+    inputArea.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        inputArea.focus();
+    });
+    const protectedChars = new Set(['\n']); // здесь свои символы
+
+    inputArea.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace') {
+        const pos = inputArea.selectionStart;
+        if (pos > 0) {
+        const prevChar = inputArea.value.charAt(pos - 1);
+        console.log(prevChar)
+        if (protectedChars.has(prevChar)) {
+            // запрещаем удалять «защищённый» символ
+            e.preventDefault();
+        } else {
+            if (!isNaN(prevChar.charCodeAt(0))) {
+                currentBackspaceCount++
+            }
+        }
+        }
+    }
+    });
+
+    // document.getElementById("newline").addEventListener("click", (e) => {
+    //     console.log('dalshe')
+    //     showPage(FATIGUE_INSTRUCTION);
+    // });
+    // document.getElementById("newline").addEventListener("click", nextTypingLine);
+    // renderTyping()
+
+}
+function showFatigueTest() {
+    showPage(FATIGUE_TEST)
+    const fatigueSurvey = [
+        "Чувствую общую слабость",
+        "Мне приходится заставлять себя как можно быстрее реагировать на поступающую информацию",
+        "Я спокоен и собран",
+        "Мне душно",
+        "Хочется хоть немного отвлечься от работы",
+        "У меня тяжелая голова",
+        "Мне стало трудно думать",
+        "Я чувствую себя раздражённым",
+        "Мне не хочется разговаривать",
+        "Я не обращаю внимания на то, как идет работа у моих коллег",
+        "У меня стали появляться паузы во время работы",
+        "Время течет медленно",
+        "Мне хочется встать и размяться",
+        "У меня устали глаза",
+        "Мне приходится напрягать слух",
+        "У меня постоянно возникают сомнения в правильности исполнения работы",
+        "Мне весело",
+        "Мне хочется работать"
+    ];
+    results.testAnswersLog = new Array(fatigueSurvey.length + 2).fill(null);
+    let container = document.getElementById("fatigue-test");
+    container.innerHTML = '<h2>Опросник острой усталости</h2>';
+    const TOTAL_TEST_QUESTIONS = fatigueSurvey.length + 2;
+    for (let i = 1; i <= TOTAL_TEST_QUESTIONS; i++) {
+        let options = [];
+        let questionText = "";
+        if (i <= fatigueSurvey.length) {
+            questionText = fatigueSurvey[i - 1];
+            options = ['Да', 'Нет', 'Затрудняюсь'];
+        } else if (i === fatigueSurvey.length + 1) {
+            questionText = "Чем вы занимались последние 8 часов";
+            options = ["умственная работа(включая комп игры)/работа с людьми", "другая работа", "отдых (не у экрана, сон)", "другое"];
+        } else if (i === fatigueSurvey.length + 2) {
+            questionText = "Оцените вашу работоспособность по 10-бальной шкале (где 1 - не могу сделать ничего полезного, и 10 - максимум работоспособности)";
+            options = ["1","2","3","4","5","6","7","8","9","10"];
+        }
+        let div = document.createElement("div");
+        let p = document.createElement("p");
+        p.style.textAlign = "left";
+        p.innerText = `${i}. ${questionText}`;
+        div.style.textAlign = "left";
+        div.appendChild(p);
+        options.forEach(option => {
+            let label = document.createElement("label");
+            label.style.display = "block";
+            label.style.margin = "4px 0";
+            let input = document.createElement("input");
+            input.type = "radio";
+            input.name = `q${i}`;
+            input.value = option;
+            
+            input.onclick = () => {
+                console.log(`fatigue ${i}`)
+                results.testAnswersLog[i - 1] = { num: i, question: questionText, answer: option };
+                console.log(results.testAnswersLog)
+
+            };
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(option));
+            label.style = "margin-bottom: 10px;"
+            div.appendChild(label);
+        });
+        container.appendChild(div);
+
+    }
+    let btn = document.createElement("button");
+    btn.className = "button";
+    btn.id = "nextButton1";
+    btn.innerText = `Продолжить`;
+    btn.onclick = () => {
+        const unanswered = results.testAnswersLog.filter(item => !item || item.answer === null || item.answer === undefined);
+        if (unanswered.length > 0 || results.testAnswersLog.length != 20) {
+            alert("Пожалуйста, ответьте на все вопросы опроса перед выгрузкой результатов.");
+            return;
+        }
+        showPage(STRESS_INSTRUCTION)
+    };
+    container.appendChild(btn);
+
+
+}
+
+function showStressTest() {
+    showPage(STRESS_TEST)
+    const stressStatements = [
+        "Я напряжен(а) и взволнован(а) (взвинчен)",
+        "У меня ком в горле, и (или) я ощущаю сухость во рту",
+        "Я перегружен(а) работой. Мне совсем не хватает времени",
+        "Я проглатываю пищу или забываю поесть",
+        "После работы я не могу отключиться от мыслей о незавершенных делах",
+        "Я чувствую себя одиноким(ой), изолированным(ой) и непонятым(ой)",
+        "Я страдаю от физического недомогания; у меня болит голова, напряжены мышцы шеи, боли в спине, спазмы в желудке.",
+        "Я поглощен(а) мрачными мыслями, измучен(а) тревожными состояниями",
+        "Меня внезапно бросает то в жар, то в холод",
+        "Я забываю о встречах или делах",
+        "Я легко могу заплакать",
+        "Я чувствую себя уставшим человеком",
+        "В трудной ситуации я крепко стискиваю зубы (или сжимаю кулаки)",
+        "Я не спокоен / не спокойна",
+        "Мне тяжело дышать, и (или) у меня внезапно перехватывает дыхание",
+        "У меня проблемы с пищеварением",
+        "Я взволнован(а), обеспокоен(а) или смущен(а)",
+        "Я легко пугаюсь; шум или шорох заставляет меня вздрагивать.",
+        "Мне необходимо более чем полчаса, чтобы заснуть",
+        "Я сбит(а) с толку, мои мысли спутаны; я не могу сконцентрировать внимание",
+        "У меня усталый вид; мешки или круги под глазами",
+        "Я чувствую тяжесть на своих плечах",
+        "Я встревожен(а), мне необходимо постоянно двигаться",
+        "Мне трудно контролировать свои поступки, эмоции, настроение или жесты.",
+        "Я чувствую напряженность"
+    ];
+    results.stressTestLog = new Array(stressStatements.length).fill(null);
+
+function renderStressQuestions() {
+    const container = document.getElementById(STRESS_TEST);
+
+    stressStatements.forEach((stmt, idx) => {
+        const div = document.createElement("div");
+        div.style.marginBottom = "20px"; // немного отступов между вопросами
+
+        const question = document.createElement("p");
+        question.innerHTML = `${idx + 1}. ${stmt}`;
+        div.appendChild(question);
+
+        const radioContainer = document.createElement("div");
+        radioContainer.style.display = "flex";
+        radioContainer.style.alignItems = "center";
+        radioContainer.style.justifyContent = "center";
+
+        const noLabel = document.createElement("span");
+        noLabel.innerText = "Никогда";
+        noLabel.style.marginRight = "10px";
+
+        noLabel.style.fontStyle = "italic";
+        noLabel.style.fontWeight = "bold";
+        noLabel.style.color = "gray";
+        radioContainer.appendChild(noLabel);
+
+        for (let i = 1; i <= 8; i++) {
+            const label = document.createElement("label");
+            label.style.marginLeft = "5px";
+            label.style.marginRight = "5px";
+
+            const input = document.createElement("input");
+            input.type = "radio";
+            input.name = `stress${idx}`;
+            input.value = i;
+            input.required = true;
+            input.onclick = () => {
+                results.stressTestLog[idx] = { num: idx + 1, question: stmt, answer: i };
+            };
+
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(i));
+            radioContainer.appendChild(label);
+        }
+
+        const yesLabel = document.createElement("span");
+        yesLabel.innerText = "Постоянно";
+        yesLabel.style.marginLeft = "10px";
+
+        yesLabel.style.fontStyle = "italic";
+        yesLabel.style.fontWeight = "bold";
+        yesLabel.style.color = "gray";
+        radioContainer.appendChild(yesLabel);
+
+        div.appendChild(radioContainer);
+        container.appendChild(div);
+    });
+
+    const btn = document.createElement("button");
+    btn.className = "button";
+    btn.id = "nextButton2";
+    btn.innerText = `Продолжить`;
+    btn.onclick = () => {
+        const unanswered = results.stressTestLog.filter(item => !item || item.answer === null || item.answer === undefined);
+        if (unanswered.length > 0 || results.stressTestLog.length != stressStatements.length) {
+            console.log(unanswered);
+            alert("Пожалуйста, ответьте на все вопросы опроса перед выгрузкой результатов.");
+            return;
+        }
+        showPage(DOWNLOAD);
+    };
+    container.appendChild(btn);
+}
+
+
+    function submitStressTest() {
+        const form = document.getElementById("download");
+        if (form.checkValidity()) {
+            const data = Array.from(new FormData(form)).map(([key, value]) => ({question: key, score: parseInt(value)}));
+            results.stressScale = data;
+            showPage(DOWNLOAD)
+
+            // alert("Опрос завершен. Можете скачать JSON файл с результатами.");
+        } else {
+            alert("Пожалуйста, ответьте на все вопросы.");
+        }
+    }
+    renderStressQuestions()
+    // submitStressTest
+}
+
+function getFormattedDateTime(date) {
+            let year = date.getFullYear();
+            let month = String(date.getMonth() + 1).padStart(2, '0'); // Ensure 2-digit format
+            let day = String(date.getDate()).padStart(2, '0');
+            let hours = String(date.getHours()).padStart(2, '0');
+            let minutes = String(date.getMinutes()).padStart(2, '0');
+            let seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${year}_${month}_${day}_${hours}:${minutes}:${seconds}`;
+}
+function downloadJSON() {
+    console.log(start)
+    const blob = new Blob([JSON.stringify(results, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `results_${getFormattedDateTime(new Date(start))}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+</script>
+</body>
+</html>
